@@ -254,7 +254,10 @@ AUC_ftn <- function(data_input, count_input){
 
     auc0 <- auc_save
     
-  } # POD0 end ################################################
+  }else{
+    acc_time <- pod0_duration
+  }
+  # POD0 end ################################################
 
   # POD1 start ###################################################
   if(Npod1!=0){
@@ -403,29 +406,85 @@ AUC_ftn <- function(data_input, count_input){
     auc_save <- auc_save + auc_work
     
     auc1 <- auc_save - auc0
+  }else{
+    acc_time <- pod1_duration
   } # POD1 end
 
+  
+  ## POD2 start
   if(Npod2!=0){
     if(Npod2==1){
-      auc_work <- ps2[1] * 24
       
-      case <- case_gen_ftn(ps2[1], ps2[1])
-      temp <- percent_auc_ftn(case, ps2[1], ps2[1], lag_time, auc_work)
+      ###########
+      if(Npod1==0){
+        auc_work <- ps2[1] * 24
+        
+        case <- case_gen_ftn(ps2[1], ps2[1])
+        temp <- percent_auc_ftn(case, ps2[1], ps2[1], 24, auc_work)
+        
+        auc2_low <- auc2_low + temp$auc_vector[1]
+        auc2_mid <- auc2_mid + temp$auc_vector[2]
+        auc2_high <- auc2_high + temp$auc_vector[3]
+        
+        time2_low <- time2_low + temp$time_vector[1]
+        time2_mid <- time2_mid + temp$time_vector[2]
+        time2_high <- time2_high + temp$time_vector[3]
+        
+        auc_save <- auc_save + auc_work
+      }else{
+        # imputation and last one
+        lag_time <-  difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
+        auc_work <- (imputed_score + ps2[1]) * lag_time/2
+        
+        
+        case <- case_gen_ftn(ps2[1], imputed_score)
+        temp <- percent_auc_ftn(case, ps2[1], imputed_score, lag_time, auc_work)
+        
+        auc2_low <- auc2_low + temp$auc_vector[1]
+        auc2_mid <- auc2_mid + temp$auc_vector[2]
+        auc2_high <- auc2_high + temp$auc_vector[3]
+        
+        time2_low <- time2_low + temp$time_vector[1]
+        time2_mid <- time2_mid + temp$time_vector[2]
+        time2_high <- time2_high + temp$time_vector[3]
+        
+        
+        auc_save <- auc_save + auc_work
+        acc_time <- acc_time + lag_time
+        
+        # last one
+        
+        # last
+        lag_time <- pod2_duration - difftime(time2[Npod2], sur_endtime, units = "hours")
+        auc_work <- ps2[Npod2] * lag_time
+        
+        
+        case <- case_gen_ftn(ps2[Npod2], ps2[Npod2])
+        temp <- percent_auc_ftn(case, ps2[Npod2], ps2[Npod2], lag_time, auc_work)
+        
+        auc2_low <- auc2_low + temp$auc_vector[1]
+        auc2_mid <- auc2_mid + temp$auc_vector[2]
+        auc2_high <- auc2_high + temp$auc_vector[3]
+        
+        time2_low <- time2_low + temp$time_vector[1]
+        time2_mid <- time2_mid + temp$time_vector[2]
+        time2_high <- time2_high + temp$time_vector[3]
+        
+        
+        auc_save <- auc_save + auc_work
+        acc_time <- acc_time + lag_time
+        
+      }
       
-      auc2_low <- auc2_low + temp$auc_vector[1]
-      auc2_mid <- auc2_mid + temp$auc_vector[2]
-      auc2_high <- auc2_high + temp$auc_vector[3]
       
-      time2_low <- time2_low + temp$time_vector[1]
-      time2_mid <- time2_mid + temp$time_vector[2]
-      time2_high <- time2_high + temp$time_vector[3]
+      ##########
       
-      auc_save <- auc_save + auc_work
+
     }else{
       
       # first: Npod1=0 -> no imputation
       if(Npod1==0){
-        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - acc_time
+        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
         auc_work <- ps2[1] * lag_time
         
         case <- case_gen_ftn(ps2[1], ps2[1])
@@ -440,7 +499,7 @@ AUC_ftn <- function(data_input, count_input){
         time2_high <- time2_high + temp$time_vector[3]
         
       }else{ # imputation
-        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - (pod0_duration + 24)
+        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
         auc_work <- (imputed_score + ps2[1]) * lag_time/2
         
         case <- case_gen_ftn(ps2[1], imputed_score)
@@ -554,15 +613,28 @@ check_ftn <- function(set_input, pod_input, result_input, n_input){
 
 }
 
-check_ftn(POD0matrix, 0, result, n)
-check_ftn(POD1matrix, 1, result, n)
-check_ftn(POD2matrix, 2, result, n)
+# check_ftn(POD0matrix, 0, result, n)
+# check_ftn(POD1matrix, 1, result, n)
+# check_ftn(POD2matrix, 2, result, n)
 
 ## little bit of numerical issue but the plots say it's true ... 
 
+POD0matrix$AUC0_real <- result$AUC0
+POD0matrix$AUC0_test <- apply(POD0matrix[,1:3],1,sum)
+POD0matrix$duration_real <- result$Duration0
+POD0matrix$duration_test <- apply(POD0matrix[,4:6],1,sum)
 
-# POD2matrix$AUC2 <- result$AUC2
-# POD2matrix$AUC2_test <- apply(POD2matrix[,1:3],1,sum)
+
+POD1matrix$AUC1_real <- result$AUC1
+POD1matrix$AUC1_test <- apply(POD1matrix[,1:3],1,sum)
+POD1matrix$duration_real <- result$Duration1
+POD1matrix$duration_test <- apply(POD1matrix[,4:6],1,sum)
+
+POD2matrix$AUC2_real <- result$AUC2
+POD2matrix$AUC2_test <- apply(POD2matrix[,1:3],1,sum)
+POD2matrix$duration_real <- result$Duration2
+POD2matrix$duration_test <- apply(POD2matrix[,4:6],1,sum)
+
 # 
 # which(round(POD2matrix$AUC2)!=round(POD2matrix$AUC2_test)) # 280 335
 
@@ -571,7 +643,15 @@ check_ftn(POD2matrix, 2, result, n)
 # > round(POD2matrix$AUC2_test[335])
 # [1] 157
 
-
-
-
-
+# POD0matrix$duration_test <- apply(POD0matrix[,4:6],1,sum)
+# POD0matrix$actual_duration <- result$Duration0
+# POD0matrix$auc_test <- apply(POD0matrix[,1:3],1,sum)
+# POD0matrix$actual_auc <- result$AUC0
+# 
+# 
+plot(POD0matrix$duration_test[POD0matrix$duration_test!=0])
+sum(POD0matrix$duration_test!=0)
+points(1:661, POD0matrix$duration_rea[POD0matrix$duration_test!=0], col="red",cex=0.5)
+# 
+# POD0matrix$actual_auc[POD0matrix$duration_test==0] 
+# which(POD0matrix$duration_test!=POD0matrix$actual_duration)
