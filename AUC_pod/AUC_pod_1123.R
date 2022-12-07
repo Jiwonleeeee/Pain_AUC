@@ -159,6 +159,7 @@ AUC_ftn <- function(data_input, count_input){
   
   auc_save <- 0
   acc_time <- 0
+  missing_indicator <- numeric(3)
   # POD0
   if(Npod0!=0){ # if 0 -> auc_work = 0
 
@@ -233,7 +234,10 @@ AUC_ftn <- function(data_input, count_input){
     
     auc0 <- auc_save
     
-  } # POD0 end ################################################
+  }else{
+    acc_time <- pod0_duration
+    missing_indicator[1] <- 1
+  }# POD0 end ################################################
 
   # POD1 start ###################################################
   if(Npod1!=0){
@@ -310,22 +314,48 @@ AUC_ftn <- function(data_input, count_input){
     auc_save <- auc_save + auc_work
     
     auc1 <- auc_save - auc0
+  }else{
+    acc_time <- pod1_duration
+    missing_indicator[2] <- 1
   } # POD1 end
 
+  ## POD2 start
   if(Npod2!=0){
     if(Npod2==1){
-      auc_work <- ps2[1] * 24
-      auc_save <- auc_save + auc_work
+      
+      if(Npod1==0){
+        auc_work <- ps2[1] * 24
+        auc_save <- auc_save + auc_work
+      }else{
+        # imputation and last one
+        lag_time <-  difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
+        auc_work <- (imputed_score + ps2[1]) * lag_time/2
+        
+        auc_save <- auc_save + auc_work
+        acc_time <- acc_time + lag_time
+        
+        # last one
+        
+        # last
+        lag_time <- pod2_duration - difftime(time2[Npod2], sur_endtime, units = "hours")
+        auc_work <- ps2[Npod2] * lag_time
+        
+        auc_save <- auc_save + auc_work
+        acc_time <- acc_time + lag_time
+        
+      }
+      
+
     }else{
       
       # first: Npod1=0 -> no imputation
       if(Npod1==0){
-        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - acc_time
+        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
         auc_work <- ps2[1] * lag_time
 
         
       }else{ # imputation
-        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - (pod0_duration + 24)
+        lag_time <- difftime(time2[1], sur_endtime, units = "hours") - pod1_duration
         auc_work <- (imputed_score + ps2[1]) * lag_time/2
         
       }
@@ -354,14 +384,16 @@ AUC_ftn <- function(data_input, count_input){
     }
     auc2 <- auc_save - (auc0 + auc1)
     
-  } # POD2 end
+  }else{
+    missing_indicator[3] <- 1
+  }# POD2 end
 
   
-  return(list(auc0=auc0, auc1=auc1, auc2=auc2, pod0=pod0_duration))
+  return(list(auc0=auc0, auc1=auc1, auc2=auc2, pod0=pod0_duration, missing=missing_indicator))
 } # function end
 
-result <- matrix(0, n, 6)
-colnames(result) <- c("AUC0","AUC1","AUC2","Duration0","Duration1","Duration2")
+result <- matrix(0, n, 9)
+colnames(result) <- c("AUC0","AUC1","AUC2","Duration0","Duration1","Duration2","Missing0","Missing1","Missing2")
 
 for(i in 1:n){
   temp_data <- subset(raw_data, record_id==ID[i])
@@ -371,6 +403,7 @@ for(i in 1:n){
   result[i,2] <- temp$auc1
   result[i,3] <- temp$auc2
   result[i,4] <- temp$pod0
+  result[i,7:9] <- temp$missing
 
   print(i)
 }
