@@ -1,7 +1,11 @@
 
 case_gen_ftn <- function(ps1_input, ps2_input){
   
-  if(ps1_input<=4 & ps2_input<=4){
+  if(ps1_input==7 & ps2_input==4){
+    case <- 11
+  }else if(ps1_input==0 & ps2_input==0){
+    case <- 10
+  }else if(ps1_input<=4 & ps2_input<=4){
     case <- 1
   }else if(ps1_input<=4 & ps2_input>4 & ps2_input<=7){
     case <- 2
@@ -87,6 +91,15 @@ percent_auc_ftn <- function(case_input, ps1_input, ps2_input, lag_time_input, au
   case <- case_input
   auc_low <- auc_mid <- auc_high <- 0
   time_low <- time_mid <- time_high <- 0
+  
+  if(case==11){
+    auc_mid <- auc_work_input
+    time_mid <- lag_time_input
+  }
+  
+  if(case==10){
+    time_low <- lag_time_input
+  }
 
   # case = 1,5,9
   if(case==1){
@@ -132,6 +145,8 @@ percent_auc_ftn <- function(case_input, ps1_input, ps2_input, lag_time_input, au
     time_high <- temp$time_vector[3]
   
   }
+  
+  
   
   auc_vector <- c(auc_low, auc_mid, auc_high)
   time_vector <- c(time_low, time_mid, time_high)

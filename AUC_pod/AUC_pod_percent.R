@@ -1,5 +1,5 @@
 rm(list=ls())
-setwd("/Users/wonny/Downloads/CHMC/Pain AUC/DATA")
+setwd("/Users/wonny/Documents/Pain_AUC/AUC_pod")
 library(openxlsx)
 library(readxl)
 library(dplyr)
@@ -577,14 +577,19 @@ AUC_ftn <- function(data_input, count_input){
 
 POD0matrix <- POD1matrix <- POD2matrix <- matrix(0,n,6)
 
-colnames(POD0matrix) <- c("AUC_low","AUC_mid","AUC_high","time_low","time_mid","time_high")
-colnames(POD1matrix) <- c("AUC_low","AUC_mid","AUC_high","time_low","time_mid","time_high")
-colnames(POD2matrix) <- c("AUC_low","AUC_mid","AUC_high","time_low","time_mid","time_high")
+colnames(POD0matrix) <- paste0(c("AUC_mild_POD", "AUC_mod_POD", "AUC_sev_POD", "time_mild_POD", "time_mod_POD", "time_sev_POD"), 0)
+colnames(POD1matrix) <- paste0(c("AUC_mild_POD", "AUC_mod_POD", "AUC_sev_POD", "time_mild_POD", "time_mod_POD", "time_sev_POD"), 1)
+colnames(POD2matrix) <- paste0(c("AUC_mild_POD", "AUC_mod_POD", "AUC_sev_POD", "time_mild_POD", "time_mod_POD", "time_sev_POD"), 2)
 
-
+#surgery_end_DT <- numeric(n)
 for(i in 1:n){
   temp_data <- subset(raw_data, record_id==ID[i])
+  #surgery_end_DT[i] <- as.POSIXct(unique(temp_data$set_new))
   temp <- AUC_ftn(temp_data, count_matrix[i,])
+  
+  temp$pod0_output[temp$pod0_output<0 & temp$pod0_output> -10^-5] <- 0
+  temp$pod1_output[temp$pod1_output<0 & temp$pod1_output> -10^-5] <- 0
+  temp$pod2_output[temp$pod2_output<0 & temp$pod2_output> -10^-5] <- 0
   
   POD0matrix[i,] <- temp$pod0_output
   POD1matrix[i,] <- temp$pod1_output
@@ -600,18 +605,21 @@ POD1matrix <- as.data.frame(POD1matrix)
 POD2matrix <- as.data.frame(POD2matrix)
 
 
-check_ftn <- function(set_input, pod_input, result_input, n_input){
-  
-  pod <- pod_input + 1
-  
-  test_value <- round(apply(set_input[,1:3],1,sum))
-  true_value <- round(result_input[,pod])
-  
-  indi <- ifelse(sum(test_value==true_value)==n_input, 1, 0)
-  
-  return(indi)
+# apply(POD2matrix, 2, range)
 
-}
+
+# check_ftn <- function(set_input, pod_input, result_input, n_input){
+#   
+#   pod <- pod_input + 1
+#   
+#   test_value <- round(apply(set_input[,1:3],1,sum))
+#   true_value <- round(result_input[,pod])
+#   
+#   indi <- ifelse(sum(test_value==true_value)==n_input, 1, 0)
+#   
+#   return(indi)
+# 
+# }
 
 # check_ftn(POD0matrix, 0, result, n)
 # check_ftn(POD1matrix, 1, result, n)
@@ -619,21 +627,21 @@ check_ftn <- function(set_input, pod_input, result_input, n_input){
 
 ## little bit of numerical issue but the plots say it's true ... 
 
-POD0matrix$AUC0_real <- result$AUC0
-POD0matrix$AUC0_test <- apply(POD0matrix[,1:3],1,sum)
-POD0matrix$duration_real <- result$Duration0
-POD0matrix$duration_test <- apply(POD0matrix[,4:6],1,sum)
-
-
-POD1matrix$AUC1_real <- result$AUC1
-POD1matrix$AUC1_test <- apply(POD1matrix[,1:3],1,sum)
-POD1matrix$duration_real <- result$Duration1
-POD1matrix$duration_test <- apply(POD1matrix[,4:6],1,sum)
-
-POD2matrix$AUC2_real <- result$AUC2
-POD2matrix$AUC2_test <- apply(POD2matrix[,1:3],1,sum)
-POD2matrix$duration_real <- result$Duration2
-POD2matrix$duration_test <- apply(POD2matrix[,4:6],1,sum)
+# POD0matrix$AUC0_real <- result$AUC0
+# POD0matrix$AUC0_test <- apply(POD0matrix[,1:3],1,sum)
+# POD0matrix$duration_real <- result$Duration0
+# POD0matrix$duration_test <- apply(POD0matrix[,4:6],1,sum)
+# 
+# 
+# POD1matrix$AUC1_real <- result$AUC1
+# POD1matrix$AUC1_test <- apply(POD1matrix[,1:3],1,sum)
+# POD1matrix$duration_real <- result$Duration1
+# POD1matrix$duration_test <- apply(POD1matrix[,4:6],1,sum)
+# 
+# POD2matrix$AUC2_real <- result$AUC2
+# POD2matrix$AUC2_test <- apply(POD2matrix[,1:3],1,sum)
+# POD2matrix$duration_real <- result$Duration2
+# POD2matrix$duration_test <- apply(POD2matrix[,4:6],1,sum)
 
 # 
 # which(round(POD2matrix$AUC2)!=round(POD2matrix$AUC2_test)) # 280 335
@@ -649,9 +657,109 @@ POD2matrix$duration_test <- apply(POD2matrix[,4:6],1,sum)
 # POD0matrix$actual_auc <- result$AUC0
 # 
 # 
-plot(POD0matrix$duration_test[POD0matrix$duration_test!=0])
-sum(POD0matrix$duration_test!=0)
-points(1:661, POD0matrix$duration_rea[POD0matrix$duration_test!=0], col="red",cex=0.5)
+# plot(POD0matrix$duration_test[POD0matrix$duration_test!=0])
+# sum(POD0matrix$duration_test!=0)
+# points(1:661, POD0matrix$duration_rea[POD0matrix$duration_test!=0], col="red",cex=0.5)
 # 
 # POD0matrix$actual_auc[POD0matrix$duration_test==0] 
 # which(POD0matrix$duration_test!=POD0matrix$actual_duration)
+
+
+#POD0matrix <- cbind(unique(raw_data[,c("record_id","set_new")]), POD0matrix)
+# final data
+POD_list <- list(POD0matrix, POD1matrix, POD2matrix)
+
+save_list <- list()
+for(i in 1:3){
+  
+  temp_data <- POD_list[[i]]
+  pod <- i-1
+  
+  temp_data <- cbind(temp_data, result[,c(paste0("AUC",pod), paste0("Duration",pod), paste0("Missing",pod))])
+  
+  # percent_AUC
+  temp_AUC <- temp_data[,1:3]
+  temp_pct <- matrix(0, n, 3)
+  for(j in 1:n){
+    
+    if(temp_data[,paste0("Missing",pod)][j]==1){
+      temp_pct[j,] <- rep(0,3)
+    }else{
+      
+      if(temp_data[,paste0("AUC",pod)][j]==0){
+        temp_pct[j,] <- c(1,0,0)
+      }else{
+        temp_pct[j,] <- as.numeric(temp_AUC[j,] / temp_data[,paste0("AUC",pod)][j])
+      }
+      
+    }
+    temp_pct[j,] <- temp_pct[j,] * 100
+    
+  } #percent end
+  
+  # matrix-> data frame/ colnames change and bind
+  temp_pct <- as.data.frame(temp_pct)
+  colnames(temp_pct) <- c(paste0("pctAUC_mild_POD",pod), paste0("pctAUC_mod_POD",pod), paste0("pctAUC_sev_POD",pod))
+  
+  temp_data <- cbind(temp_data, temp_pct)
+  
+  
+  # percent time : similar
+  temp_time <- temp_data[,4:6]
+  temp_pct <- matrix(0, n, 3)
+  for(j in 1:n){
+    
+    if(temp_data[,paste0("Missing",pod)][j]==1){
+      temp_pct[j,] <- rep(0,3)
+    }else{
+      temp_pct[j,] <- as.numeric(temp_time[j,] / temp_data[,paste0("Duration",pod)][j])
+    }
+    temp_pct[j,] <- temp_pct[j,] * 100
+  }
+  
+  
+  temp_pct <- as.data.frame(temp_pct)
+  colnames(temp_pct) <- c(paste0("pctTime_mild_POD",pod), paste0("pctTime_mod_POD",pod), paste0("pctTime_sev_POD",pod))
+  
+  temp_data <- cbind(temp_data, temp_pct)
+  
+  # standardize AUC -> only pod 0
+  if(pod==0){
+    
+    stand_AUC_POD0 <- numeric(n)
+    for(j in 1:n){
+      if(temp_data[,paste0("Missing",pod)][j]==1){
+        stand_AUC_POD0[j] <- 0
+      }else{
+        stand_AUC_POD0[j] <- (temp_data[,paste0("AUC",pod)][j] * 24) / temp_data[,paste0("Duration",pod)][j]
+      }
+      
+    }
+    temp_data <- cbind(temp_data, stand_AUC_POD0)
+  }
+  
+  # if missing =1 -> duration = 0
+  
+  for(j in 1:n){
+    if(temp_data[,paste0("Missing",pod)][j]==1){
+      temp_data[,paste0("Duration",pod)][j] <- 0
+    }
+  }
+
+  save_list[[i]] <- temp_data
+  
+}
+
+Merge_data <- cbind(save_list[[1]], save_list[[2]])
+Merge_data <- cbind(Merge_data, save_list[[3]])
+
+#apply(Merge_data, 2, range)
+
+# id and set
+Merge_data <- cbind(unique(raw_data[,c("record_id","set_new")]), Merge_data)
+
+# export
+# setwd("/Users/wonny/Downloads/CHMC/Pain AUC/Result")
+# write.xlsx(Merge_data, sheetName="sheet1", file="Pain_AUC_POD.xlsx")
+
+
