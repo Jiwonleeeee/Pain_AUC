@@ -290,28 +290,27 @@ AUC_ftn <- function(data_input, count_input){
         auc_save <- auc_save + auc_work
         acc_time <- acc_time + lag_time
       }
+      # last part
+      if(Npod2!=0){ # imputation
+        
+        lag_time <- pod0_duration + 24 - difftime(time1[Npod1], sur_endtime, units = "hours")
+        acc1 <- acc_time
+        acc2 <- acc_time + difftime(time2[1], time1[Npod1], units = "hours")
+        
+        imputed_score <- imput_ftn(ps1[Npod1], ps2[1], acc1, acc2, 1, pod0_duration)
+        auc_work <-  (ps1[Npod1] + imputed_score) * lag_time /2
+        
+        
+        
+      }else{  # no imputation
+        lag_time <- pod1_duration - difftime(time1[Npod1], sur_endtime, units = "hours")
+        auc_work <- ps1[Npod1] * lag_time
+        
+        
+      }
+      acc_time <- acc_time + lag_time
+      auc_save <- auc_save + auc_work
     }
-    
-    # last part
-    if(Npod2!=0){ # imputation
-      
-      lag_time <- pod0_duration + 24 - difftime(time1[Npod1], sur_endtime, units = "hours")
-      acc1 <- acc_time
-      acc2 <- acc_time + difftime(time2[1], time1[Npod1], units = "hours")
-      
-      imputed_score <- imput_ftn(ps1[Npod1], ps2[1], acc1, acc2, 1, pod0_duration)
-      auc_work <-  (ps1[Npod1] + imputed_score) * lag_time /2
-
-      
-      
-    }else{  # no imputation
-      lag_time <- pod1_duration - difftime(time1[Npod1], sur_endtime, units = "hours")
-      auc_work <- ps1[Npod1] * lag_time
-
-      
-    }
-    acc_time <- acc_time + lag_time
-    auc_save <- auc_save + auc_work
     
     auc1 <- auc_save - auc0
   }else{
