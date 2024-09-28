@@ -599,7 +599,7 @@ for(i in 1:n){
   print(i)
 }
 
-load("pod_result.rda")
+load("/Users/wonny/Downloads/pod_result_correction.rda")
 
 POD0matrix <- as.data.frame(POD0matrix)
 POD1matrix <- as.data.frame(POD1matrix)
@@ -759,8 +759,28 @@ Merge_data <- cbind(Merge_data, save_list[[3]])
 # id and set
 Merge_data <- cbind(unique(raw_data[,c("record_id","set_new")]), Merge_data)
 
+for(i in 1:nrow(Merge_data)){
+  if(Merge_data$Missing0[i]==1){
+    Merge_data[i,c(3:10,12:18)] <- "."
+  }
+}
+
+
+for(i in 1:nrow(Merge_data)){
+  if(Merge_data$Missing1[i]==1){
+    Merge_data[i,c(19:26,28:33)] <- "."
+  }
+}
+
+for(i in 1:nrow(Merge_data)){
+  if(Merge_data$Missing2[i]==1){
+    Merge_data[i,c(34:41,43:46)] <- "."
+  }
+}
+
+
 # export
 # setwd("/Users/wonny/Downloads/CHMC/Pain AUC/Result")
-# write.xlsx(Merge_data, sheetName="sheet1", file="Pain_AUC_POD.xlsx")
+write.xlsx(Merge_data, sheetName="sheet1", file="/Users/wonny/Downloads/Pain_AUC_POD_072423.xlsx")
 
 

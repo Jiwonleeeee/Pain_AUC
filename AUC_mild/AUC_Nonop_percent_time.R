@@ -178,7 +178,7 @@ auc_under4_ftn <- function(df_input, discharge_input){
     percent_time_save <- percent_time_save + pt_work
     
   }else{
-    # break x -> 2 cases
+    # break x -> 2 cases (0307: 이부분 뭔가 좀 이상함.. 이거 마지막 부분에 pain_score없으면 이거 안하기로 한듯? 그래서 lag_time 0으로 해둔듯)
     if(difftime(discharge_time,time_vec[last_index],units = "hours") < (48-acc_time)){
       lag_time <- 0
       
@@ -227,7 +227,7 @@ range(auc_under4_final)
 range(pt_under4_final)
 
 # % calculation
-load("AUC_Nonop.rda");auc_nonOP_normal <- temp_data
+load("/Users/wonny/Documents/Pain_AUC/AUC_0307/AUC_Nonop.rda");auc_nonOP_normal <- temp_data
 auc_nonOP_merge <- cbind(auc_nonOP_normal,auc_under4_final)
 
 auc_nonOP_merge$percent_auc <- numeric(nrow(auc_nonOP_merge))
@@ -241,11 +241,14 @@ for(t in 1:nrow(auc_nonOP_merge)){
 }
 
 auc_nonOP_merge$percent_auc <- auc_nonOP_merge$percent * 100
-auc_nonOP_merge$percent_time <- pt_under4_final
+auc_nonOP_merge$time <- pt_under4_final
+auc_nonOP_merge$percent_time <- auc_nonOP_merge$time/auc_nonOP_merge$duration * 100
+# setwd("/Users/wonny/Documents/Pain_AUC/AUC_0307")
+# save(auc_nonOP_merge, file="AUC_Nonop.rda")
 # merge data
 
 # left_join
-Nop_mild_pain_merge <- left_join(Nop_pain,auc_nonOP_merge,by="ID")
+#Nop_mild_pain_merge <- left_join(Nop_pain,auc_nonOP_merge,by="ID")
 
 
 # setwd("/Users/wonny/Downloads/CHMC/Pain AUC/Result")

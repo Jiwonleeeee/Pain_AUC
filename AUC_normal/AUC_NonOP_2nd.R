@@ -1,3 +1,4 @@
+# last update: 03/07/23
 setwd("/Users/wonny/Downloads/CHMC/Pain AUC/DATA")
 library(openxlsx)
 library(readxl)
@@ -158,4 +159,5 @@ Nop_pain_merge <- left_join(Nop_pain,temp_data,by="ID")
 # setwd("/Users/wonny/Downloads/CHMC/Pain AUC/Result")
 # write.xlsx(Nop_pain_merge, sheetName="sheet1", file="NonOP_AUC_combined_data_final.xlsx")
 #save to rda file
-# save(temp_data, file = "AUC_Nonop.rda")
+# setwd("/Users/wonny/Downloads/CHMC/Pain AUC/Result")
+#save(temp_data, file = "/Users/wonny/Documents/Pain_AUC/AUC_Nonop.rda")
